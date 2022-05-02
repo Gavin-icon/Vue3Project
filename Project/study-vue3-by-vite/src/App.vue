@@ -1,21 +1,21 @@
 <script setup>
-// This starter template is using Vue 3 <script setup> SFCs
-// Check out https://vuejs.org/api/sfc-script-setup.html#script-setup
-import HelloWorld from './components/HelloWorld.vue'
+import { watchEffect } from '@vue/runtime-core'
+import { reactive, ref } from '@vue/reactivity'
+const dataList = reactive({
+  num: 0
+})
+const count = ref(10)
+watchEffect(() => {
+  console.log(`使用了count: ${count.value} 与 num : ${dataList.num}`)
+})
 </script>
 
 <template>
-  <img alt="Vue logo" src="./assets/logo.png" />
-  <HelloWorld msg="Hello Vue 3 + Vite" />
+  <div v-text="count" />
+  <button @click="handle">
+    Count
+  </button>
 </template>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
 </style>
