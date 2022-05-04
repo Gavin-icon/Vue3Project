@@ -86,6 +86,18 @@ const routes = [
   }
 ]
 
+// 修改原型
+// const originalPush = createRouter.prototype.push
+// createRouter.prototype.push = function push (location, onResolve, onReject) {
+//   if (onResolve || onReject) return originalPush.call(this, location, onResolve, onReject)
+//   return originalPush.call(this, location).catch(err => err)
+// }
+//  --------------
+// const routerPush = createRouter.prototype.push
+// createRouter.prototype.push = function push (location) {
+//   return routerPush.call(this, location).catch(error => error)
+// }
+
 // 创建router实例
 const router = createRouter({
   // 上一个版本采用 mode指定hash/history
