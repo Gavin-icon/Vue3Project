@@ -1,7 +1,7 @@
 // 上一个版本使用的是VueRouter,const router = new VueRouter({ routes: [] })，export default router
 // 这个版本使用的是createRouter
 import { createRouter, createWebHashHistory } from 'vue-router'
-
+import store from '@/vuex'
 // 路由规则
 const routes = [
   {
@@ -29,23 +29,35 @@ const routes = [
     path: '/order-confirm',
     name: 'order-confirm',
     component: () => import('@/views/OrderConfirm/index.vue'),
-    props: true
+    props: true,
+    meta: {
+      requiresAuth: true
+    }
   },
   {
     path: '/order',
     name: 'order',
-    component: () => import('@/views/Order/index.vue')
+    component: () => import('@/views/Order/index.vue'),
+    meta: {
+      requiresAuth: true
+    }
   },
   {
     path: '/order-detail/:orderId',
     name: 'order-detail',
     component: () => import('@/views/OrderDetail/index.vue'),
-    props: true
+    props: true,
+    meta: {
+      requiresAuth: true
+    }
   },
   {
     path: '/pay',
     name: 'pay',
-    component: () => import('@/views/Pay/index.vue')
+    component: () => import('@/views/Pay/index.vue'),
+    meta: {
+      requiresAuth: true
+    }
   },
   {
     path: '/product/:productId',
@@ -67,7 +79,10 @@ const routes = [
   {
     path: '/cart',
     name: 'cart',
-    component: () => import('@/views/Cart/index.vue')
+    component: () => import('@/views/Cart/index.vue'),
+    meta: {
+      requiresAuth: true
+    }
   },
   {
     path: '/search',
@@ -77,7 +92,10 @@ const routes = [
   {
     path: '/user',
     name: 'user',
-    component: () => import('@/views/User/index.vue')
+    component: () => import('@/views/User/index.vue'),
+    meta: {
+      requiresAuth: true
+    }
   },
   {
     path: '/:pathMatch(.*)*',
@@ -106,4 +124,18 @@ const router = createRouter({
   routes
 })
 
+router.beforeEach((to) => {
+  if (!to.meta.requiresAuth) {
+    return true
+  }
+  if (!store.state.user || !window.localStorage.getItem('USER_TOKEN')) {
+    return {
+      name: 'login',
+      query: {
+        // 通过query参数传递当前路径,path
+        redirect: to.fullPath
+      }
+    }
+  }
+})
 export default router

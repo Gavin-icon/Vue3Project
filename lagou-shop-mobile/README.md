@@ -46,5 +46,14 @@
   return routerPush.call(this, location).catch(error => error)
 }
 
-4. 
+4. reactive函数内部使用计算属性声明响应式数据不成功，undefined!!!!
+
+5. 组合式API只能在组件内部使用，如useRouter、useStore......
+
+6. 路由操作符
+* router.push(route.query.redirect || '/user')
+* 空值合并操作符： router.push(route.query.redirect ?? '/user')
+
+7. 样式穿透会影响flex布局
+
 ```
