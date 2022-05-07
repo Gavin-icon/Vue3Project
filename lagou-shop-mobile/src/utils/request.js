@@ -5,9 +5,9 @@ const request = axios.create({
   baseURL: 'https://shop.fed.lagounews.com/api'
 })
 request.interceptors.request.use(config => {
-  const { user } = store.state
-  if (user) {
-    config.headers.Authorization = 'Bearer ' + user
+  const { token } = store.state.user
+  if (token) {
+    config.headers.Authorization = 'Bearer ' + token
     // console.log(config.headers.Authorization)
   }
   return config

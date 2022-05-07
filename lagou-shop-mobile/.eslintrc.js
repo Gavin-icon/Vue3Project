@@ -19,6 +19,7 @@ module.exports = {
   rules: {
     'vue/multi-word-component-names': 0,
     'vue/no-setup-props-destructure': 0,
-    'vue/max-attributes-per-line': 0
+    'vue/max-attributes-per-line': 0,
+    'import/first': 0
   }
 }

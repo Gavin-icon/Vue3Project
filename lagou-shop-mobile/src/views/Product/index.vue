@@ -64,7 +64,7 @@
             </van-cell>
             <!-- 3.数量 -->
             <van-cell title="数量" class="stepper">
-              <van-stepper v-model="value" min="1" max="8" />
+              <van-stepper v-model="productNum" min="1" max="8" />
             </van-cell>
           </van-cell-group>
         </van-popup>
@@ -110,23 +110,35 @@
       <div v-html="storeInfo?.description" class="description" />
     </van-tab>
   </van-tabs>
+  <!-- 加入购物车结构 -->
+  <van-action-bar>
+    <van-action-bar-icon icon="chat-o" text="客服" color="#ee0a24" />
+    <van-action-bar-icon icon="cart-o" text="购物车" to="/cart" />
+    <van-action-bar-icon icon="star" text="已收藏" color="#ff5000" />
+    <van-action-bar-button type="warning" text="加入购物车" @click="handleCartAdd" />
+    <van-action-bar-button type="danger" text="立即购买" />
+  </van-action-bar>
 </template>
 
 <script setup>
 import { getProductDetails } from '@/api/product'
 import { computed, ref, reactive } from '@vue/reactivity'
-import { watch } from '@vue/runtime-core'
-import { useRouter, onBeforeRouteUpdate, useRoute } from 'vue-router'
+// import { watch } from '@vue/runtime-core'
+import { useRouter, onBeforeRouteUpdate } from 'vue-router'
+import { useStore } from 'vuex'
+// 引入接口
+import { addToCart } from '@/api/cart'
 // 引入组件
 import CommentItem from '@/components/CommentItem.vue'
+import { Toast } from 'vant'
 const router = useRouter()
-const route = useRoute()
+const store = useStore()
 // 返回上一页
 const goBack = () => {
-  // history.back()
-  router.push({
-    name: 'home'
-  })
+  history.back()
+  // router.push({
+  //   path: router.currentRoute.value.query.redirect
+  // })
 }
 // 获取商品id
 const { productId } = defineProps({
@@ -142,9 +154,10 @@ const initProductDetail = async (productId) => {
   const { data } = await getProductDetails(productId)
   // console.log(data)
   if (data.status !== 200) {
+    console.log(data)
     // 找不到对应商品
     return router.push({
-      name: 'home'
+      // name: 'home'
     })
   }
   productDetails.value = data.data
@@ -171,26 +184,31 @@ const reply = computed(() => productDetails.value.reply)
 // 推荐商品信息
 const goodsList = computed(() => productDetails.value.good_list)
 // 更新列表，防止组件服用不更新页面，重写进入页面的感觉
-// onBeforeRouteUpdate((to) => {
-//   // 清楚旧的数据
-//   productDetails.value = {}
-//   // 回到页面顶部
-//   document.body.scrollTop = 0
-//   document.documentElement.scrollTop = 0
-//   // 请求数据
-//   initProductDetail(to.params.productId)
-// })
-watch(() => route.params, (toParams, oldParams) => {
+onBeforeRouteUpdate((to) => {
+  // 局部监听数据，只针对组件服用
+  console.log(to)
+  // 清楚旧的数据
   productDetails.value = {}
+  // 回到页面顶部
   document.body.scrollTop = 0
   document.documentElement.scrollTop = 0
-  initProductDetail(toParams.productId)
+  // 请求数据
+  initProductDetail(to.params.productId)
 })
+// 全局监听路由变化，只要路径中有一个数据变化，就执行
+// watch(() => route.params, (toParams, oldParams) => {
+//   productDetails.value = {}
+//   document.body.scrollTop = 0
+//   document.documentElement.scrollTop = 0
+//   initProductDetail(toParams.productId)
+// })
 
 // 商品详情区域
 // const descriptionDetails = computed(() => storeInfo?.description)
 
 // 规格弹出层处理
+// 商品数量
+const productNum = ref(1)
 const specState = reactive({
   show: false,
   // 选择的规格的数据，只存储每个productAttr的子项的第一个数据，0 -> 第一个规格 1-> 第二个规格
@@ -216,6 +234,41 @@ const productValue = computed(() => productDetails.value.productValue)
 const sku = computed(() => specState.spec.toString())
 // 根据sku获取对应的商品的数据信息
 const skuDetails = computed(() => productValue.value?.[sku.value])
+
+// 加入购物车功能
+const handleCartAdd = async () => {
+  // 检测用户登录状态
+  if (!store.state.user) {
+    return router.push({
+      name: 'login',
+      query: {
+        redirect: router.currentRoute.value.fullPath
+      }
+    })
+  }
+  // 检测弹出层是否显示了
+  if (!specState.show) {
+    // eslint-disable-next-line no-return-assign
+    return specState.show = true
+  }
+  // 发送请求,添加到购物车
+  const { data } = await addToCart({
+    // new 0 - 加入购物车 1 - 立即购买
+    new: 0,
+    productId,
+    uniqueId: skuDetails.value.unique,
+    cartNum: productNum.value
+  })
+  if (data.status !== 200) {
+    return false
+  }
+  // console.log('加入购物车', data)
+  // 隐藏弹出层
+  specState.show = false
+  // 提示
+  Toast('加入购物车成功')
+}
+
 </script>
 
 <style lang="scss" scoped>
@@ -223,6 +276,7 @@ const skuDetails = computed(() => productValue.value?.[sku.value])
 .van-tabs {
   background-color: #f2f2f2;
   width: 375px;
+  margin-bottom: 50px;
 }
 
 /* ********第一个van-tap区域：商品*********** */
@@ -362,6 +416,12 @@ const skuDetails = computed(() => productValue.value?.[sku.value])
   img {
     width: 375px;
   }
+}
+
+// 设置加入购物车的样式
+.van-action-bar {
+  z-index: 10000;
+  width: 100%;
 }
 
 // 弹出层

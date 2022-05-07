@@ -118,7 +118,7 @@ const onSubmit = async () => {
   }
   console.log(data)
   // 存储token信息
-  store.commit('setUser', data.data.token)
+  store.commit('user/setUser', data.data.token)
   router.push({ path: route.query.redirect ?? '/user' })
 }
 const loginType = () => {

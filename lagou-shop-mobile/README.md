@@ -46,14 +46,41 @@
   return routerPush.call(this, location).catch(error => error)
 }
 
-4. reactive函数内部使用计算属性声明响应式数据不成功，undefined!!!!
+4. reactive函数内部使用计算属性声明响应式数据不成功，undefined!!!!！！！！！！！！！！！！
 
-5. 组合式API只能在组件内部使用，如useRouter、useStore......
-
-6. 路由操作符
+5. 路由操作符 && flex布局与样式传统 && 组合式API
 * router.push(route.query.redirect || '/user')
 * 空值合并操作符： router.push(route.query.redirect ?? '/user')
+* 样式穿透会影响flex布局
+* 组合式API只能在组件内部使用，如useRouter、useStore......
 
-7. 样式穿透会影响flex布局
+6. // 更新列表，防止组件服用不更新页面，重写进入页面的感觉,建议使用第一种，第二种会导致错误
+  onBeforeRouteUpdate((to) => {
+    // 局部监听数据，只针对组件服用
+    console.log(to)
+    // 清楚旧的数据
+    productDetails.value = {}
+    // 回到页面顶部
+    document.body.scrollTop = 0
+    document.documentElement.scrollTop = 0
+    // 请求数据
+    initProductDetail(to.params.productId)
+  })
+  // 全局监听路由变化，只要路径中有一个数据变化，就执行
+  // watch(() => route.params, (toParams, oldParams) => {
+  //   productDetails.value = {}
+  //   document.body.scrollTop = 0
+  //   document.documentElement.scrollTop = 0
+  //   initProductDetail(toParams.productId)
+  // })
+
+7. vuex模块化管理，使用：
+// 分模块处理后，全局访问时：
+* 对于state--> store.state.模块.属性
+* 对于getters--> store.getters['模块/属性']
+* 对于mutations--> store.commit('模块/方法',参数)
+* 对于actions--> store.dispatch('模块/方法',参数)
+// 对于模块内部的数据，局部访问时：
+* 访问state中的属性时：直接--> state.属性 就可以！！！
 
 ```

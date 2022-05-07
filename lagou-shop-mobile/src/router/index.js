@@ -128,7 +128,7 @@ router.beforeEach((to) => {
   if (!to.meta.requiresAuth) {
     return true
   }
-  if (!store.state.user || !window.localStorage.getItem('USER_TOKEN')) {
+  if (!store.state.user.token || !window.localStorage.getItem('USER_TOKEN')) {
     return {
       name: 'login',
       query: {
