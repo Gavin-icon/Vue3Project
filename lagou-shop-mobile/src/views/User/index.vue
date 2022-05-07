@@ -60,7 +60,7 @@ import { ref, computed } from 'vue'
 
 const loadUserInfo = async () => {
   const { data } = await getUserInfo()
-  console.log(data)
+  console.log(data.data)
   if (data.status !== 200) {
     return false
   }

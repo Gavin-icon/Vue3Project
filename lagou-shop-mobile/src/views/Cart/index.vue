@@ -22,12 +22,14 @@
 <script setup>
 import CartItem from './components/CartItem.vue'
 import LayoutFooter from '@/components/LayoutFooter.vue'
-import { nextTick, ref } from 'vue'
+import { nextTick } from 'vue'
 import { useStore } from 'vuex'
+import { useRouter } from 'vue-router'
 // 引入接口
 import { getCartList } from '@/api/cart'
 import { computed } from '@vue/reactivity'
 const store = useStore()
+const router = useRouter()
 // 初始化购物车
 const initCartList = async () => {
   const { data } = await getCartList({})
@@ -72,7 +74,14 @@ const checkedAll = computed({
 })
 
 const onSubmit = () => {
-  console.log('结算')
+  router.push({
+    name: 'order-confirm',
+    // cardId：指的是要结算的所有sku的集合，以逗号隔开即可
+    params: {
+      // cardId 保存为字符串，sku-id 集合
+      cartId: store.getters['cart/checkedItems'].map(item => item.id).toString()
+    }
+  })
 }
 </script>
 

@@ -53,6 +53,8 @@
 * 空值合并操作符： router.push(route.query.redirect ?? '/user')
 * 样式穿透会影响flex布局
 * 组合式API只能在组件内部使用，如useRouter、useStore......
+* toRaw : 该组合式API可以将proxy对象转换为默认形式，对象形式
+* 在路由规则中写了props:true后，可以通过defineProps / props 接受 params传递的参数！！！
 
 6. // 更新列表，防止组件服用不更新页面，重写进入页面的感觉,建议使用第一种，第二种会导致错误
   onBeforeRouteUpdate((to) => {
