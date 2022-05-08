@@ -35,53 +35,92 @@
     <div class="product-list">
       <!-- 标题区域 -->
       <van-cell-group>
-        <van-cell title="共3件" />
+        <van-cell :title="`共${ singleOrderNum }件`" class="total-title" />
       </van-cell-group>
       <!-- 内容区域 -->
       <van-cell-group>
         <!-- 单个商品 -->
-        <van-cell class="product">
-          <img src="" alt="">
+        <van-cell class="product" v-for="item in cartInfo" :key="item.id">
+          <img :src="item.productInfo.image" alt="">
           <div class="info">
-            <p class="title">
-              华为平板 HUAWEI MatePad11 Pro 10.8 英寸
-            </p>
+            <p class="title" v-text="item.productInfo.store_name" />
             <p class="price">
-              ￥ 3699.00
+              ￥ {{ item.truePrice }}
             </p>
           </div>
-          <span class="count">× 3</span>
+          <span class="count">× {{ item.cart_num }} </span>
         </van-cell>
       </van-cell-group>
     </div>
   </div>
   <!-- 立即付款区域 -->
-  <van-submit-bar :price="3300" button-text="立即付款" @submit="onSubmit" />
+  <van-submit-bar :price="toal_price" button-text="立即付款" @submit="onSubmit" />
+  <!-- 立即付款弹窗界面 -->
+  <van-action-sheet class="pay-out" v-model:show="popupPayStatus" title="请选择付款方式：">
+    <van-radio-group v-model="checked">
+      <van-cell-group>
+        <van-icon name="chat" size="26" />
+        <van-cell clickable @click="checked = 'weChat'" title="微信支付" label="微信快捷支付">
+          <template #right-icon>
+            <van-radio name="weChat" checked-color="#ee0a24" />
+          </template>
+        </van-cell>
+      </van-cell-group>
+      <van-cell-group>
+        <van-icon name="passed" size="26" />
+        <van-cell clickable @click="checked = 'aliPay'" title="支付宝支付" label="支付宝快捷支付">
+          <template #right-icon>
+            <van-radio name="aliPay" checked-color="#ee0a24" />
+          </template>
+        </van-cell>
+      </van-cell-group>
+      <van-cell-group>
+        <van-icon name="refund-o" size="26" />
+        <van-cell clickable @click="checked = 'yue'" title="余额支付" :label="`可用余额为：${now_money}元`">
+          <template #right-icon>
+            <van-radio name="yue" checked-color="#ee0a24" />
+          </template>
+        </van-cell>
+      </van-cell-group>
+    </van-radio-group>
+    <van-button type="danger" block round text="立即支付" @click="goPay" />
+    <van-cell-group class="cancel">
+      <van-cell title="取消" clickable @click="goCancel" />
+    </van-cell-group>
+  </van-action-sheet>
 </template>
 
 <script setup>
 // 引入接口
-import { getAddressList } from '@/api/order'
+import { getAddressList, confirmOrder } from '@/api/order'
+import { payType } from '@/api/pay'
 // 引入组合式API
 import { computed, ref, toRaw } from '@vue/reactivity'
-import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
-const store = useStore()
+// 引入组件
+import { Toast } from 'vant'
 const router = useRouter()
-const { cartId } = defineProps({
+const { cartId, newOfPay } = defineProps({
   cartId: {
     type: String,
     required: true
+  },
+  // eslint-disable-next-line vue/require-default-prop
+  newOfPay: {
+    type: String,
+    required: false
   }
 })
 // -----------------响应式数据声明
 // 弹出层状态
 const popupStatus = ref(false)
+const popupPayStatus = ref(false)
 // 默认选中的地址--对应list的id
 const chosenAddressId = ref('')
 const addressList = ref([])
 const curAddress = ref({})
-
+const confirmOrderInfo = ref({})
+const checked = ref('yue')
 // -------------接口数据获取
 const initAddressList = async () => {
   const { data } = await getAddressList({
@@ -94,13 +133,51 @@ const initAddressList = async () => {
   addressList.value = convert(data.data)
 }
 initAddressList()
+const _newOfPay = computed(() => newOfPay === '1' ? 1 : 0)
+
+const initConfirmOrder = async () => {
+  const { data } = await confirmOrder({
+    cartId,
+    new: _newOfPay.value
+  })
+  console.log(data)
+  if (data.status !== 200) {
+    return false
+  }
+  confirmOrderInfo.value = data.data
+}
+initConfirmOrder()
 
 // -------------声明计算属性
 const isEmpty = computed(() => addressList.value.length === 0)
-
+const cartInfo = computed(() => confirmOrderInfo.value?.cartInfo)
+const addressInfo = computed(() => confirmOrderInfo.value?.addressInfo)
+const orderKey = computed(() => confirmOrderInfo.value?.orderKey)
+const singleOrderNum = computed(() => cartInfo.value?.length || 0)
+// eslint-disable-next-line camelcase
+const now_money = computed(() => confirmOrderInfo.value.userInfo.now_money || 0)
+// eslint-disable-next-line camelcase
+const toal_price = computed(() => Number(confirmOrderInfo.value?.priceGroup?.totalPrice || 0) * 100)
 // -------------声明函数
 const onSubmit = () => {
-
+  popupPayStatus.value = true
+}
+const goPay = async () => {
+  const { data } = await payType(orderKey.value, {
+    addressId: addressInfo.value.id,
+    payType: checked.value
+  })
+  console.log(data)
+  if (data.status !== 200) {
+    Toast.fail(data.msg)
+    return false
+  } else {
+    Toast.success('购买成功!')
+    router.push('/')
+  }
+}
+const goCancel = () => {
+  popupPayStatus.value = false
 }
 const goBack = () => {
   history.back()
@@ -121,7 +198,7 @@ const onAdd = () => {
   })
 }
 const onEdit = (item) => {
-  // console.log(toRaw(item))
+  console.log(toRaw(item))
   router.push({
     name: 'address',
     query: {
@@ -201,6 +278,82 @@ const convert = data => {
     .default {
       padding-right: 5px;
       background: #d6251f;
+    }
+  }
+  // 商品列表区域
+  .product-list {
+    .total-title {
+      font-size: 16px;
+      font-weight: 700;
+    }
+    :deep(.product) {
+      .van-cell__value {
+        display: flex;
+        align-items: center;
+        img {
+          width: 70px;
+          height: 70px;
+        }
+        .info {
+          box-sizing: border-box;
+          width: 70%;
+          padding-right: 15px;
+          .title {
+            font-size: 16px;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+          .price {
+            font-size: 14px;
+            color:#d6251f
+          }
+        }
+        .count {
+          color: #ccc;
+        }
+      }
+
+    }
+  }
+}
+
+.pay-out {
+  .van-radio-group {
+    .van-cell-group {
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+    }
+    .van-cell {
+      display: flex;
+      align-items: center;
+      :deep(.van-cell__title) {
+        span {
+          font-size: 18px;
+          font-weight: 700;
+        }
+        div {
+          font-size: 14px;
+          color: rgb(141, 141, 141);
+        }
+      }
+    }
+  }
+  .van-button {
+    width: 88%;
+    margin: 0 auto;
+    margin-top: 15px;
+    margin-bottom: 15px;
+  }
+  .van-cell-group.cancel {
+    margin-top: 10px;
+    text-align: center;
+    font-weight: 700;
+    :deep(span) {
+      font-size: 15px;
     }
   }
 }

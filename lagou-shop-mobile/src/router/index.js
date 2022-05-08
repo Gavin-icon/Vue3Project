@@ -49,7 +49,8 @@ const routes = [
     component: () => import('@/views/Order/index.vue'),
     meta: {
       requiresAuth: true
-    }
+    },
+    props: true
   },
   {
     path: '/order-detail/:orderId',

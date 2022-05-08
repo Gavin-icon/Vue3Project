@@ -116,7 +116,10 @@
     <van-action-bar-icon icon="cart-o" text="购物车" to="/cart" />
     <van-action-bar-icon icon="star" text="已收藏" color="#ff5000" />
     <van-action-bar-button type="warning" text="加入购物车" @click="handleCartAdd" />
-    <van-action-bar-button type="danger" text="立即购买" />
+    <van-action-bar-button
+      @click="handlePayImmediate"
+      type="danger" text="立即购买"
+    />
   </van-action-bar>
 </template>
 
@@ -140,6 +143,7 @@ const goBack = () => {
   //   path: router.currentRoute.value.query.redirect
   // })
 }
+const newOfPay = ref(0)
 // 获取商品id
 const { productId } = defineProps({
   productId: {
@@ -152,12 +156,11 @@ const productDetails = ref({})
 // 获取对应商品的详细信息
 const initProductDetail = async (productId) => {
   const { data } = await getProductDetails(productId)
-  // console.log(data)
+  console.log(data)
   if (data.status !== 200) {
-    console.log(data)
     // 找不到对应商品
     return router.push({
-      // name: 'home'
+      name: 'home'
     })
   }
   productDetails.value = data.data
@@ -238,7 +241,7 @@ const skuDetails = computed(() => productValue.value?.[sku.value])
 // 加入购物车功能
 const handleCartAdd = async () => {
   // 检测用户登录状态
-  if (!store.state.user) {
+  if (!store.state.user.token) {
     return router.push({
       name: 'login',
       query: {
@@ -254,19 +257,38 @@ const handleCartAdd = async () => {
   // 发送请求,添加到购物车
   const { data } = await addToCart({
     // new 0 - 加入购物车 1 - 立即购买
-    new: 0,
+    new: newOfPay.value,
     productId,
     uniqueId: skuDetails.value.unique,
     cartNum: productNum.value
   })
+  console.log(data)
+  // 加入购物车后会返回一个cartId
   if (data.status !== 200) {
+    Toast.fail(data.msg)
     return false
   }
   // console.log('加入购物车', data)
   // 隐藏弹出层
   specState.show = false
   // 提示
-  Toast('加入购物车成功')
+  if (newOfPay.value === 0) {
+    Toast('加入购物车成功')
+  }
+  if (newOfPay.value === 1) {
+    return router.push({
+      name: 'order-confirm',
+      params: {
+        cartId: data.data.cartId.toString(),
+        newOfPay: newOfPay.value
+      }
+    })
+  }
+}
+
+const handlePayImmediate = () => {
+  newOfPay.value = 1
+  handleCartAdd()
 }
 
 </script>

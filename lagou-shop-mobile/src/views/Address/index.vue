@@ -25,7 +25,7 @@
           { pattern: /^1\d{10}$/, message: '手机号格式不正确' }
         ]"
       />
-      <!-- 3.地区选择 -->
+      <!-- 3.地区选择,选择完毕后显示的地址 -->
       <van-field
         v-model="fieldValue"
         is-link
@@ -47,6 +47,7 @@
           { required: true, message: '请输入详细地址信息' }
         ]"
       />
+      <!-- 地区选择弹出层 -->
       <van-popup v-model:show="show" round position="bottom">
         <van-cascader
           v-model="area"
@@ -84,6 +85,7 @@ import { Toast } from 'vant'
 import { useRouter } from 'vue-router'
 const router = useRouter()
 const { cartId } = defineProps({
+  // eslint-disable-next-line vue/require-default-prop
   cartId: String
 })
 // --------------------声明响应式数据
@@ -119,12 +121,13 @@ const fieldNames = {
 }
 // 将地区选择的信息存储
 // eslint-disable-next-line no-unused-vars
-let address = {}
+const address = ref({})
 
 // --------------------声明computed计算属性
 const isEdit = computed(() => router.currentRoute.value.query.isEdit)
 const titleName = computed(() => isEdit.value ? '编辑收货人信息' : '新增收货人信息')
 const submitId = computed(() => isEdit.value ? router.currentRoute.value.query.editId : 0)
+
 // --------------------声明函数
 const goBack = () => {
   history.back()
@@ -134,15 +137,15 @@ const onSubmit = async () => {
     // eslint-disable-next-line camelcase
     real_name: real_name.value,
     phone: phone.value,
+    address: address.value,
+    // 新增操作设置id为0 , 其他值表示是编辑操作
+    id: submitId.value,
     // eslint-disable-next-line camelcase
     is_default: is_default.value,
-    detail: detail.value,
-    address,
-    // 新增操作设置id为0 , 其他值表示是编辑操作
-    id: submitId.value
+    detail: detail.value
   })
+  console.log(address.value)
   if (data.status !== 200) {
-    // console.log(data)
     Toast(data.msg + '请手动修改收获地址')
     return false
   }
@@ -178,12 +181,13 @@ const onFinish = ({ selectedOptions }) => {
   console.log(selectedOptions)
   fieldValue.value = selectedOptions.map((option) => option.n).join('🙂')
   // 为提交接口提供数据
-  address = {
+  address.value = {
     province: selectedOptions[0].n,
     city: selectedOptions[1].n,
     city_id: selectedOptions[1].v,
     district: selectedOptions[2].n
   }
+  console.log(address.value)
 }
 // --------------------接口数据获取
 // 获取后台的地址信息
@@ -206,6 +210,7 @@ const editInfo = () => {
     real_name.value = edit_info.name
     phone.value = edit_info.tel
     fieldValue.value = edit_info.address
+    address.value = edit_info.address
     is_default.value = Boolean(edit_info.isDefault)
     /* eslint-enable */
   }

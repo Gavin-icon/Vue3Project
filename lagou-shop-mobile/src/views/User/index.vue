@@ -38,13 +38,13 @@
         </van-cell>
       </van-cell-group>
       <van-cell-group inset>
-        <van-cell title="订单中心" value="查看全部" is-link to="/order" />
+        <van-cell title="订单中心" value="查看全部" is-link :to="{ name: 'order', params: { activeId: 0 } }" />
         <van-grid :column-num="5" :border="false">
-          <van-grid-item icon="bill-o" text="待付款" />
-          <van-grid-item icon="tosend" text="待发货" />
-          <van-grid-item icon="logistics" text="待收货" />
-          <van-grid-item icon="comment-o" text="待评价" />
-          <van-grid-item icon="sign" text="已完成" />
+          <van-grid-item icon="bill-o" text="待付款" :to="{ name: 'order', params: { activeId: 0 } }" />
+          <van-grid-item icon="tosend" text="待发货" :to="{ name: 'order', params: { activeId: 1 } }" />
+          <van-grid-item icon="logistics" text="待收货" :to="{ name: 'order', params: { activeId: 2 } }" />
+          <van-grid-item icon="comment-o" text="待评价" :to="{ name: 'order', params: { activeId: 3 } }" />
+          <van-grid-item icon="sign" text="已完成" :to="{ name: 'order', params: { activeId: 4 } }" />
         </van-grid>
       </van-cell-group>
     </div>
